@@ -138,7 +138,7 @@ import numpy as np
 alt.renderers.enable("default")
 alt.data_transformers.enable("vegafusion")
 
-data = pd.read_csv('../../../data/processed/nov28_processed.csv').drop(
+data = pd.read_csv('../data/processed/nov28_processed.csv').drop(
     columns=['time', 'subject_race', 'subject_age',
         'department_name', 'arrest_made', 'citation_issued', 'warning_issued',
         'contraband_found', 'contraband_drugs', 'contraband_weapons',
