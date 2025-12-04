@@ -5,9 +5,9 @@ page-layout: full
 toc: false
 ---
 
-#### AQ1: *Title*
+#### AQ1: *What are the patterns between a reason for a traffic stop and its outcome over different months and years, and how might this change depending on whether there was a search conducted?*
 
-### Title
+### Traffic Stop Outcomes by Reason for Stop and Whether a Search was Conducted, Over Months and Years
 
 ```{python}
 #| echo: false
@@ -17,26 +17,191 @@ toc: false
 
 ```
 
-#### AQ2: *Title*
+#### AQ2: *What are the patterns between the outcome of a stop and the reason for a stop, across different ages?*
 
-### Title
+### Subject Ages by Reason for a Traffic Stop and Outcome
 
 ```{python}
 #| echo: false
 #| message: false
 #| warning: false
 #| fig-cap: "View 2"
+import pandas as pd
+import altair as alt
+import numpy as np
+alt.renderers.enable("default")
+alt.data_transformers.enable("vegafusion")
 
+data = pd.read_csv('../data/processed/nov28_processed.csv').drop(
+    columns=['time', 'subject_race', 'subject_sex',
+        'department_name', 'arrest_made', 'citation_issued', 'warning_issued',
+        'contraband_found', 'contraband_drugs', 'contraband_weapons',
+        'search_person', 'search_conducted', 'frisk_performed',
+        'search_vehicle', 'search_basis', 'reason_for_frisk',
+        'reason_for_search', 'raw_Ethnicity', 'datetime',
+        'reason_frisk_count', 'reason_search_count',
+        's_erratic_suspicious_behav', 's_suspicious_movement',
+        's_other_official_info', 's_witness_obs', 's_suspected_contraband',
+        's_informant_tip', 'f_erratic_suspicious_behav',
+        'f_suspicious_movement', 'f_other_official_info', 'f_witness_obs',
+        'f_suspected_contraband', 'f_informant_tip', 'year', 'action_taken'
+        ])
+
+data = data[['date', 'reason_for_stop', 'outcome', 'subject_age']]
+
+dropdown = alt.binding_select(
+    options=['no action', 'warning', 'citation', 'arrest'],
+    name='Outcome:'
+)
+
+drop_param = alt.selection_point(
+    fields=['outcome'],
+    bind=dropdown,
+    empty='all')
+
+selection = alt.selection_point(fields=['reason_for_stop'], on='click', bind='legend')
+hover = alt.selection_point(fields=['reason_for_stop', 'subject_age'], on='mouseover', empty='none')
+
+# https://altair-viz.github.io/gallery/strip_plot_jitter.html
+dot = alt.Chart(data).mark_circle(opacity = 0.4, size = 10).add_params(selection, drop_param, hover).encode(
+    x = alt.X('subject_age', axis=alt.Axis(title = 'Subject Age (Years)', titleFontSize = 14, titleFontWeight = 500, labelFontSize = 12)), 
+    y = alt.Y('reason_for_stop', axis=alt.Axis(title = 'Reason for Traffic Stop', titleFontWeight = 500, titleFontSize = 14, titlePadding=85, labelOpacity=0)), 
+    yOffset="jitter:Q", color = alt.Color(
+        'reason_for_stop'
+        , legend=alt.Legend(
+            orient='none', direction='vertical', legendX=-228, legendY=117, 
+                            labelFontSize=12, rowPadding=10.2, 
+                            labelAlign='right', labelLimit=300, symbolSize=400, 
+                            labelOffset=178, symbolOffset=20, titleOpacity=0),
+        ),
+    opacity=alt.condition(selection, alt.value(0.4),alt.value(0.01)),
+    size=alt.condition(hover, alt.value(30), alt.value(10)),
+    tooltip = [alt.Tooltip('subject_age', title = 'Subject Age'),
+            alt.Tooltip('outcome', title = 'Stop Outcome')]
+    ).transform_calculate(jitter = 'sqrt(-2*log(random()))*cos(2*PI*random())').properties(width = 600, height = 350).transform_filter(drop_param)
+
+median_lines = alt.Chart(data).transform_filter(selection).mark_rule(
+    size=3, color="red", opacity = 0).encode(
+        x="median(subject_age):Q",
+        color="reason_for_stop:N", opacity=alt.condition(selection, alt.value(0.5),alt.value(0.05))).transform_filter(drop_param)
+
+# https://altair-viz.github.io/gallery/scatter_marginal_hist.html
+top_hist = alt.Chart(data).mark_bar(opacity=0.5, binSpacing=0).encode(
+    x = alt.X('subject_age', axis=alt.Axis(title=None, labelFontSize = 10)).bin(maxbins=20).stack(None),
+        y = alt.Y('count()', axis=alt.Axis(title='Count', titlePadding = 8, titleFontWeight = 500)).stack(None),
+        color = alt.Color('reason_for_stop'), opacity=alt.condition(selection, alt.value(0.6),alt.value(0.05))).properties(
+    height=100, width = 600, title = alt.TitleParams(
+        text='Subject Ages By Reason for a Traffic Stop and Outcome', fontSize=18, fontWeight=600)).add_params(selection).transform_filter(drop_param)
+
+count_hist = (
+    alt.Chart(data).mark_bar()
+    .encode(alt.Y('reason_for_stop', axis=alt.Axis(labels=False, title="")),
+        alt.X('count()', axis = alt.Axis(title = 'Count', titleFontWeight = 500)),
+        alt.Color('reason_for_stop', 
+                    ),
+        opacity=alt.condition(selection,alt.value(1),alt.value(0.2))).properties(width=100, height = 350)).add_params(
+        selection).transform_filter(drop_param)
+
+box = alt.Chart(data).mark_boxplot(
+    extent=1.5, ticks = False, median = {'stroke': 'red', 'strokeWidth': 3}, size = 30,
+    outliers={'fill': '#4c78a7', 'stroke' : '#4c78a7', 'strokeOpacity': 0.1, 'opacity': 0.05, 'size': 75}
+                ).transform_filter(selection).encode(
+    x = alt.X('count(subject_age)', axis=alt.Axis(title = None, titleFontSize = 14, titleFontWeight = 500, tickCount=15)),
+    y = alt.Y('outcome', sort = ['arrest', 'citation', 'warning', 'no action'], axis=alt.Axis(title = 'Outcomes', titleFontSize = 14, titleFontWeight = 500, titlePadding = 12, labelFontSize = 12)),
+    # opacity=alt.condition(oz, alt.value(0.4),alt.value(0.01))
+    ).properties(width = 600, height = 200, title = alt.TitleParams(
+    text = 'Subject Age (Years)', fontSize = 14, fontWeight = 500, offset = -240,
+    # subtitle = 'Distribution of Subject Ages by Outcome', subtitleFontSize=14, subtitleFontWeight=500
+    )).transform_filter(drop_param)
+    
+side_count = alt.Chart(data).mark_bar().encode(
+    x = alt.X('count()', axis=alt.Axis(title='Count', titlePadding = 5, titleFontWeight = 500)), 
+    y = alt.Y('outcome:N', axis=alt.Axis(labels=False, title=""))).properties(
+    height = 200, width = 100).transform_filter(selection).transform_filter(drop_param)
+
+view2 = ((((top_hist + median_lines) & (dot | count_hist )) & (box | side_count))).configure_concat(spacing=5)
+view2
 ```
 
-#### AQ3: *Title*
+#### AQ3: *Given the intersection between specific instances of a reason for stop and the subject's sex, what are the patterns between whether action was taken over different months, and how might this vary depending on whether a search or frisk was conducted?*
 
-### Title
+### Traffic Stop Outcome by Sex, Reason for Stop, and Whether A Frisk and/or Search Was Conducted
 
 ```{python}
 #| echo: false
 #| message: false
 #| warning: false
 #| fig-cap: "View 3"
+import pandas as pd
+import altair as alt
+import numpy as np
+alt.renderers.enable("default")
+alt.data_transformers.enable("vegafusion")
 
+data = pd.read_csv('../../../data/processed/nov28_processed.csv').drop(
+    columns=['time', 'subject_race', 'subject_age',
+        'department_name', 'arrest_made', 'citation_issued', 'warning_issued',
+        'contraband_found', 'contraband_drugs', 'contraband_weapons',
+        'search_person',
+        'search_vehicle', 'search_basis', 'reason_for_frisk',
+        'reason_for_search', 'raw_Ethnicity', 'datetime',
+        'reason_frisk_count', 'reason_search_count',
+        's_erratic_suspicious_behav', 's_suspicious_movement',
+        's_other_official_info', 's_witness_obs', 's_suspected_contraband',
+        's_informant_tip', 'f_erratic_suspicious_behav',
+        'f_suspicious_movement', 'f_other_official_info', 'f_witness_obs',
+        'f_suspected_contraband', 'f_informant_tip', 'year'
+        ])
+
+data = data[['date', 'subject_sex', 'reason_for_stop', 'outcome', 'action_taken', 'search_conducted', 'frisk_performed']]
+
+map = {1: 'Action Taken', 
+      0: 'No Action Taken'}
+data['action_taken'] = data['action_taken'].map(map)
+data['all'] = 1
+
+sel1 = alt.selection_point(fields=['subject_sex'], on='click', empty='all')
+sel2 = alt.selection_point(fields=['reason_for_stop'], on='click', empty='all')
+# hover = alt.selection_point(fields=['action_taken'], on='mouseover', empty='none', bind = 'legend')
+
+search = alt.binding_checkbox(name='Search Conducted')
+paras = alt.param(bind=search)
+frisk = alt.binding_checkbox(name='Frisk Conducted')
+paraf = alt.param(bind=frisk)
+
+heatmap = alt.Chart(data).mark_rect().encode(
+    x=alt.X('subject_sex', axis=alt.Axis(title= 'Subject Sex', titleFontSize=14, titleFontWeight = 500,
+                                        labelFontSize = 12, titlePadding=8)),
+    y=alt.Y('reason_for_stop', axis=alt.Axis(title='Reason for Traffic Stop', titleFontSize=14, titleFontWeight = 500,
+                                        labelFontSize = 12, titlePadding=8 )),
+    color=alt.Color('count()',
+                    scale=alt.Scale(type='log', base = 2), 
+                    legend = alt.Legend(title = 'Count (Log₂ Transformed)',
+                                        titleFontSize=14, titleFontWeight = 500,
+                                        labelFontSize = 12)
+                    ),
+    opacity = alt.condition(
+        sel1 & sel2, alt.value(1),alt.value(0.2))
+                    ).transform_filter((paras & (alt.datum.search_conducted == True)) | (~paras), 
+                    (paraf & (alt.datum.frisk_performed == True)) | (~paraf)
+                    ).properties(height = 400, width = 150).add_params(sel1, sel2)
+
+line = alt.Chart(data).mark_line().encode(
+    x = alt.X('month(date)', axis=alt.Axis(title='Month', titleFontSize=14, titleFontWeight = 500,
+                                        labelFontSize = 12, titlePadding=8)), 
+    y = alt.Y('count()', axis=alt.Axis(title='Count', titleFontSize=14, titleFontWeight = 500,
+                                        labelFontSize = 12, titlePadding=8)), 
+    color = alt.Color('action_taken').legend(title='Outcome', orient='top',titleFontSize=14, titleLimit = 500, titleFontWeight = 500,
+                                        labelFontSize = 12,),
+    # size=alt.condition(hover, alt.value(5), alt.value(2)),
+    ).transform_filter((paras & (alt.datum.search_conducted == True)) | (~paras), 
+                    (paraf & (alt.datum.frisk_performed == True)) | (~paraf)
+                    ).properties(height = 300, width = 500).add_params(
+    # hover, 
+    paras, paraf).transform_filter(sel1, sel2
+    )   
+view3 = (line | heatmap).properties(
+    title = alt.TitleParams(text = 'Traffic Stop Outcome Type by Sex, Reason for Stop, and Whether a Frisk and/or Search Was Conducted',
+                            fontSize = 18, anchor = 'middle'))
+view3
 ```
