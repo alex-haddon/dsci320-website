@@ -20,7 +20,7 @@ import numpy as np
 
 alt.data_transformers.enable("vegafusion")
 
-nc_data = pd.read_csv("../../data/processed/processed_nc_charlotte_2005_2015.csv", parse_dates=["datetime"])
+nc_data = pd.read_csv("../data/processed/processed_nc_charlotte_2005_2015.csv", parse_dates=["datetime"])
 
 #data transformation
 nc_data['year'] = nc_data['datetime'].dt.year
@@ -177,7 +177,7 @@ import numpy as np
 
 alt.data_transformers.enable("vegafusion")
 
-nc_data = pd.read_csv("../../data/processed/processed_nc_charlotte_2005_2015.csv", parse_dates=["datetime"])
+nc_data = pd.read_csv("../data/processed/processed_nc_charlotte_2005_2015.csv", parse_dates=["datetime"])
 
 # Are specific combinations of temporal factors (ex: Friday nights, winter mornings) 
 # associated with particular types of violations or enforcement behaviors?
@@ -435,7 +435,7 @@ import numpy as np
 
 alt.data_transformers.enable("vegafusion")
 
-nc_data = pd.read_csv("../../data/processed/processed_nc_charlotte_2005_2015.csv", parse_dates=["datetime"])
+nc_data = pd.read_csv("../data/processed/processed_nc_charlotte_2005_2015.csv", parse_dates=["datetime"])
 nc_data['year'] = nc_data['datetime'].dt.year
 nc_data['time'] = pd.to_datetime(nc_data['time'], format='%H:%M:%S', errors='coerce')
 plot_data = nc_data[['time', 'outcome', 'year']].dropna()

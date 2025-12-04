@@ -26,7 +26,7 @@ unnecessary_cols = ['date', 'time', 'subject_race', 'arrest_made', 'citation_iss
                     'contraband_weapons', 'frisk_performed', 'search_conducted', 'search_person', 'search_vehicle',
                     'search_basis', 'reason_for_frisk', 'reason_for_search', 'reason_for_stop']
 
-ncdata = pd.read_csv('../../data/processed/registered_processed_nc_2005_2015.csv',
+ncdata = pd.read_csv('../data/processed/registered_processed_nc_2005_2015.csv',
                 parse_dates=['datetime']
                 ).drop(columns=unnecessary_cols)
 
@@ -145,7 +145,7 @@ unnecessary_cols = ['date', 'time', 'subject_race', 'arrest_made', 'citation_iss
                     'contraband_weapons', 'frisk_performed', 'search_conducted', 'search_person', 'search_vehicle',
                     'search_basis', 'reason_for_frisk', 'reason_for_search', 'reason_for_stop']
 
-ncdata = pd.read_csv('../../data/processed/registered_processed_nc_2005_2015.csv',
+ncdata = pd.read_csv('../data/processed/registered_processed_nc_2005_2015.csv',
                     parse_dates=['datetime']
                     ).drop(columns=unnecessary_cols)
 
@@ -279,7 +279,7 @@ unnecessary_cols = ['date', 'time', 'subject_race', 'arrest_made', 'citation_iss
                     'contraband_weapons', 'frisk_performed', 'search_conducted', 'search_person', 'search_vehicle',
                     'search_basis', 'reason_for_frisk', 'reason_for_search', 'reason_for_stop']
 
-ncdata = pd.read_csv('../../data/processed/registered_processed_nc_2005_2015.csv',
+ncdata = pd.read_csv('../data/processed/registered_processed_nc_2005_2015.csv',
                     parse_dates=['datetime']
                     ).drop(columns=unnecessary_cols)
 

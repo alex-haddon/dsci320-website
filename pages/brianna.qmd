@@ -21,7 +21,7 @@ import altair as alt
 alt.data_transformers.disable_max_rows()
 alt.renderers.enable('default')
 
-clean = pd.read_csv("../../data/processed/cleaned_master_dataset.csv")
+clean = pd.read_csv("../data/processed/cleaned_master_dataset.csv")
 
 # Parameters
 brush = alt.selection_interval(
@@ -247,7 +247,7 @@ import altair as alt
 alt.data_transformers.disable_max_rows()
 alt.renderers.enable('default')
 
-clean = pd.read_csv("../../data/processed/cleaned_master_dataset.csv")
+clean = pd.read_csv("../data/processed/cleaned_master_dataset.csv")
 
 # Parameters
 brush = alt.selection_interval(name="brush")
@@ -470,7 +470,7 @@ import altair as alt
 alt.data_transformers.disable_max_rows()
 alt.renderers.enable('default')
 
-clean = pd.read_csv("../../data/processed/cleaned_master_dataset.csv")
+clean = pd.read_csv("../data/processed/cleaned_master_dataset.csv")
 
 race_order = ["Asian / Pacific Islander", "Black", "Hispanic", "White"]
 
