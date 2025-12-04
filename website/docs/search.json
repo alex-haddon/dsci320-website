@@ -1,0 +1,72 @@
+[
+  {
+    "objectID": "pages/alex.html",
+    "href": "pages/alex.html",
+    "title": "Temporal Trends in Traffic Stops",
+    "section": "",
+    "text": "AQ1: How does the frequency of traffic stops vary throughout the day, and are there consistent “peak” or “low” hours in 2005 versus 2015?\n\n\nExploring General Hourly Patterns in Traffic Stops with Yearly Comparison and Time-Period Summaries\n\n\n\n\n\n\nView 1\n\n\n\nAQ2: Are specific combinations of temporal factors (ex: Friday nights, winter mornings) associated with particular types of violations?\n\n\n\nTemporal Patterns of Police Stops by Reason, Day of the Week, Season, and Hour\n\n\n\n\n\n\nView 2\n\n\n\nAQ3: Are certain types of traffic stop outcomes common at specific times of day?\n\n\n\nPatterns in Traffic Stop Outcomes by Time of Day\n\n\n\n\n\n\nView 3"
+  },
+  {
+    "objectID": "pages/about.html",
+    "href": "pages/about.html",
+    "title": "Data",
+    "section": "",
+    "text": "This dataset is a record of all traffic stops in the city of Charlotte, North Carolina, United States in 2005 and 2015. Charlotte is the capitol and largest city in North Carolina, and is a major urban population center in the United States. The dataset records the date, time, and location of the traffic stop; the age, sex, and ethnicity of the driver; the reason for the traffic stop, including suspicion of drugs, weapons, or illegal activity; whether the car was searched and if anything was found; and whether a citation or warning was issued, or an arrest was made. The raw data comes as separate files for each city center, which must be combined into a cohesive dataset. The raw data is much too large for Altair to handle with nearly 4 million observations between the years of 2000 and 2015, so we have taken a random sample of 400,000 observations between 2010 and 2015 for our analysis.\n\n\n\nThe dataset comes from the Stanford Open Policing Project (SOPP), available here. The project was created to improve transparency and enable research on racial disparities in police traffic stops across the United States.\nTo build this dataset, the SOPP team filed hundreds of public records requests to state and local law enforcement agencies under Freedom of Information laws. Millions of individual traffic stop records were gathered and standardized across jurisdictions to ensure consistent variable names. The data was collected to analyze, document, and share patterns of policing behavior, so researchers, journalists, and policymakers could be informed on how disparities occur."
+  },
+  {
+    "objectID": "pages/about.html#about-the-data",
+    "href": "pages/about.html#about-the-data",
+    "title": "Data",
+    "section": "",
+    "text": "This dataset is a record of all traffic stops in the city of Charlotte, North Carolina, United States in 2005 and 2015. Charlotte is the capitol and largest city in North Carolina, and is a major urban population center in the United States. The dataset records the date, time, and location of the traffic stop; the age, sex, and ethnicity of the driver; the reason for the traffic stop, including suspicion of drugs, weapons, or illegal activity; whether the car was searched and if anything was found; and whether a citation or warning was issued, or an arrest was made. The raw data comes as separate files for each city center, which must be combined into a cohesive dataset. The raw data is much too large for Altair to handle with nearly 4 million observations between the years of 2000 and 2015, so we have taken a random sample of 400,000 observations between 2010 and 2015 for our analysis.\n\n\n\nThe dataset comes from the Stanford Open Policing Project (SOPP), available here. The project was created to improve transparency and enable research on racial disparities in police traffic stops across the United States.\nTo build this dataset, the SOPP team filed hundreds of public records requests to state and local law enforcement agencies under Freedom of Information laws. Millions of individual traffic stop records were gathered and standardized across jurisdictions to ensure consistent variable names. The data was collected to analyze, document, and share patterns of policing behavior, so researchers, journalists, and policymakers could be informed on how disparities occur."
+  },
+  {
+    "objectID": "pages/about.html#data-abstraction",
+    "href": "pages/about.html#data-abstraction",
+    "title": "Data",
+    "section": "Data Abstraction",
+    "text": "Data Abstraction\n\n\n\n\n\n\n\n\n\nAttribute Name\nAttribute Type\nData Semantics\nCardinality\n\n\n\n\ndate\ntemporal\nDate on which the traffic stop occurred\nmin=01-01-2005, max=31-01-2015\n\n\ntime\ntemporal\nTime of day at which the traffic stop occurred\nmin=00:00:00, max=23:23:00\n\n\ndatetime\ntemporal\nCombination of the date and time at which the stop occurred\nmin=01-01-2005T00:00:00, max=31-01-2015T23:23:00\n\n\nsubject_race\nnominal\nRace of the stopped driver\n6 unique values\n\n\nsubject_sex\nnominal\nSex of the stopped driver\n2 unique values\n\n\nsubject_age\nquantitative\nAge of the stopped driver to the year\nmin=16, max=110\n\n\ndepartment_name\nnominal\nName of the police department that conducted the stop\n2 unique values\n\n\narrest_made\nboolean\nWhether the stopped driver was arrested\n2 unique values\n\n\ncitation_issued\nboolean\nWhether the stopped driver was issued a citation\n2 unique values\n\n\nwarning_issued\nboolean\nWhether the stopped driver was issued a warning\n2 unique values\n\n\noutcome\nordinal\nThe final outcome of the traffic stop, i.e. whether the driver was warned, issued a citation, arrested, or had no consequenc\n4 unique values\n\n\ncontraband_found\nboolean\nWhether contrabound was found in the car\n2 unique values\n\n\ncontraband_drugs\nboolean\nWhether illegal drugs were found in the car\n2 unique values\n\n\ncontraband_weapons\nboolean\nWhether illegal weapons were found in the car\n2 unique values\n\n\nfrisk_performed\nboolean\nWhether the driver was frisked\n2 unique values\n\n\nsearch_conducted\nboolean\nWhether a search of the driver or car was performed\n2 unique values\n\n\nsearch_person\nboolean\nWhether a search of the driver was conducted\n2 unique values\n\n\nsearch_vehicle\nboolean\nWhether a search of the vehicle was conducted\n2 unique values\n\n\nsearch_basis\nnominal\nThe official basis for the search, cleaned\n3 unique values\n\n\nreason_for_frisk\nstring\nThe official basis for the frisk, as a combination of string choices\n59 unique values\n\n\nreason_for_search\nstring\nThe official basis for the search, as a combination of string choices\n28 unique values\n\n\nreason_for_stop\nstring\nThe official basis for the stop, as a single string choice\n10 unique values\n\n\nraw_Ethnicity\nnominal\nThe uncleaned ethnicity of the driver (whether or not the driver is hispanic)\n2 unique values"
+  },
+  {
+    "objectID": "pages/brianna.html",
+    "href": "pages/brianna.html",
+    "title": "Racial Disparities in Traffic Stops",
+    "section": "",
+    "text": "AQ1: How do police stop outcomes differ across racial groups and age ranges, and what patterns emerge in the distribution of ages and outcomes within each race?\n\n\nStop Outcome Patterns Across Various Racial Groups and Ages\n\n\n\n\n\n\nView 1\n\n\n\nAQ2: How do different types of police actions relate to each search type (person search, vehicle search, both, or neither), and how do these patterns differ across race groups and age distributions?\n\n\n\nAction and Search Type Relationships Across Demographics\n\n\n\n\n\n\nView 2\n\n\n\nAQ3: How do age distributions differ between individuals who were arrested and those who were not, and how do contraband findings among these groups change over time when examining specific subsets of individuals?\n\n\n\nAge, Arrest Outcomes, and Contraband Patterns Over Time\n\n\n\n\n\n\nView 3"
+  },
+  {
+    "objectID": "pages/eddie.html",
+    "href": "pages/eddie.html",
+    "title": "Patterns of Driver Sex and Age in Traffic Stops",
+    "section": "",
+    "text": "AQ1: How does the probability of a driver being stopped change with driver age and driver sex?\n\n\nPatterns in Stop Probability by Driver Age and Driver Sex\n\n\n\n\n\n\nView 1\n\n\n\nAQ2: How does the outcome of the traffic stop vary between drivers of different ages and sexes, and which driver age range and sex are most associated with a poor traffic stop outcome (i.e. arrest)?\n\n\n\nPatterns of Stop Outcome Among Male and Female Drivers\n\n\n\n\n\n\nView 2\n\n\n\nAQ3: How do the relationships between driver age, driver sex, and traffic stop likelihood change between 2005 and 2015?\n\n\n\nChanges in Stop Likelihood Between 2005 and 2015\n\n\n\n\n\n\nView 3"
+  },
+  {
+    "objectID": "pages/index.html",
+    "href": "pages/index.html",
+    "title": "Project Team Bear",
+    "section": "",
+    "text": "Welcome to the Project Team Bear website. This site hosts our data project deliverables, visualizations, and short write-ups produced by each team member.\n\n\nThis project is designed for students, researchers, policymakers, and community members who are interested in understanding how race and ethnicity shape experiences with police traffic stops. By presenting clear, interactive visualizations, our goal is to make the data accessible to non-technical audiences while still providing enough depth to support evidence-based discussions about equity, bias, and policing practices in the United States.\n\n\nOur analysis uses traffic stop data from the Stanford Open Policing Project (SOPP), available here. It is a large-scale initiative that compiles millions of stop records obtained through public records requests to law enforcement agencies nationwide. The SOPP dataset provides standardized variables such as driver demographics, stop reason, search details, contraband findings, and stop outcomes (e.g., warnings, citations, arrests).\nFor this project, we focus on the city of Charlotte, North Carolina for the years 2005 and 2015 . As the full dataset is too large for Altair’s rendering limits (nearly 4 million observations from 2000–2015), our group worked with either curated subsets or random samples appropriate for each exploratory analysis. The specific fields we used vary across team members but include age, race, action taken, search intrusiveness, contraband type, and stop outcomes.\nA quick navigation to each team member’s page:\n\nTemporal Race and Ethnicity Sex and Age Outcomes\n\n\n\nAnyone interested in how race and ethnicity shape experiences with traffic stops including students, researchers, and policymakers. This project helps reveal where differences in treatment appear, such as during searches or arrests. Ultimately, by using data and presenting our insights clearly, we aim to encourage discussions about equity, accountability, and bias in law enforcement practices.\n\n\n\n\n\n\n\n\nEdward Sobczak: I’m majoring in Microbiology & Immunology and minoring in Data Science, and I enjoy crocheting!\nAlex Haddon: I study Economics and Data Science and I love to ski ⛷️\nBrianna Chau: I am a third year Economics student, with a minor in Data Science. I am interested in strength training, cardio, and watching my macros!\nRoxanna Ng: I am majoring in Political Science and minoring in Data Science, and I enjoy exploring good restaurants!"
+  },
+  {
+    "objectID": "pages/index.html#the-project",
+    "href": "pages/index.html#the-project",
+    "title": "Project Team Bear",
+    "section": "",
+    "text": "This project is designed for students, researchers, policymakers, and community members who are interested in understanding how race and ethnicity shape experiences with police traffic stops. By presenting clear, interactive visualizations, our goal is to make the data accessible to non-technical audiences while still providing enough depth to support evidence-based discussions about equity, bias, and policing practices in the United States.\n\n\nOur analysis uses traffic stop data from the Stanford Open Policing Project (SOPP), available here. It is a large-scale initiative that compiles millions of stop records obtained through public records requests to law enforcement agencies nationwide. The SOPP dataset provides standardized variables such as driver demographics, stop reason, search details, contraband findings, and stop outcomes (e.g., warnings, citations, arrests).\nFor this project, we focus on the city of Charlotte, North Carolina for the years 2005 and 2015 . As the full dataset is too large for Altair’s rendering limits (nearly 4 million observations from 2000–2015), our group worked with either curated subsets or random samples appropriate for each exploratory analysis. The specific fields we used vary across team members but include age, race, action taken, search intrusiveness, contraband type, and stop outcomes.\nA quick navigation to each team member’s page:\n\nTemporal Race and Ethnicity Sex and Age Outcomes\n\n\n\nAnyone interested in how race and ethnicity shape experiences with traffic stops including students, researchers, and policymakers. This project helps reveal where differences in treatment appear, such as during searches or arrests. Ultimately, by using data and presenting our insights clearly, we aim to encourage discussions about equity, accountability, and bias in law enforcement practices."
+  },
+  {
+    "objectID": "pages/index.html#about-the-team",
+    "href": "pages/index.html#about-the-team",
+    "title": "Project Team Bear",
+    "section": "",
+    "text": "Edward Sobczak: I’m majoring in Microbiology & Immunology and minoring in Data Science, and I enjoy crocheting!\nAlex Haddon: I study Economics and Data Science and I love to ski ⛷️\nBrianna Chau: I am a third year Economics student, with a minor in Data Science. I am interested in strength training, cardio, and watching my macros!\nRoxanna Ng: I am majoring in Political Science and minoring in Data Science, and I enjoy exploring good restaurants!"
+  },
+  {
+    "objectID": "pages/roxanna.html",
+    "href": "pages/roxanna.html",
+    "title": "Patterns in Traffic Stop Outcomes",
+    "section": "",
+    "text": "AQ1: Title\n\n\nTitle\n\nAQ2: Title\n\n\n\nTitle\n\nAQ3: Title\n\n\n\nTitle"
+  }
+]

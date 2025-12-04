@@ -1,0 +1,31 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "DSCI 320 Project"
+  navbar:
+    left:
+      - href: pages/index.qmd
+        text: Home
+      - href: pages/about.qmd
+        text: About
+      - href: pages/alex.qmd
+        text: Temporal
+      - href: pages/brianna.qmd
+        text: Race and Ethnicity
+      - href: pages/eddie.qmd
+        text: Sex and Age
+      - href: pages/roxanna.qmd
+        text: Outcomes
+
+format:
+  html:
+    embed-resources: false
+    theme:
+      - cosmo
+    css: styles.css
+    toc: true
+
+
+

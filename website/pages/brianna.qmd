@@ -1,0 +1,612 @@
+---
+title: "Racial Disparities in Traffic Stops"
+author: "Brianna Chau"
+page-layout: full
+toc: false
+---
+
+#### AQ1: *How do police stop outcomes differ across racial groups and age ranges, and what patterns emerge in the distribution of ages and outcomes within each race?*
+
+### Stop Outcome Patterns Across Various Racial Groups and Ages
+
+```{python}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "View 1"
+import pandas as pd
+import numpy as np
+import altair as alt
+
+alt.data_transformers.disable_max_rows()
+alt.renderers.enable('default')
+
+clean = pd.read_csv("../../data/processed/cleaned_master_dataset.csv")
+
+# Parameters
+brush = alt.selection_interval(
+    name="brush",
+    translate=False,
+    zoom=False,
+    mark=alt.BrushConfig(
+        fillOpacity=0.15,
+        fill="lightgray",
+        stroke="black",
+        strokeWidth=1.5
+    )
+)
+
+race_select = alt.selection_point(
+    fields=["race_label"],
+    name="race_select",
+    clear=True
+)
+hist_select = alt.selection_point(
+    fields=["age_bin"],
+    name="hist_select",
+    clear=True
+)
+age_slider = alt.param(
+    name="age_slider",
+    value=int(clean["subject_age"].min()),
+    bind=alt.binding_range(
+        min=int(clean["subject_age"].min()),
+        max=int(clean["subject_age"].max()),
+        step=1,
+        name="Age Slider: "
+    )
+)
+
+# Race labels in the correct order
+race_order_label = ["Asian / Pacific Islander", "Black", "Hispanic", "White"]
+
+# Color scale for races
+color_scale = alt.Scale(
+    domain=race_order_label,
+    range=["#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3"]
+)
+
+# Bins for histogram
+clean["age_bin"] = pd.cut(clean["subject_age"], bins=10).astype(str)
+
+# Viz 1.1
+jitter_scatter_actions = (
+    alt.Chart(clean)
+    .transform_calculate(jitter="(random() - 0.5) * 0.4")
+    .mark_circle(size=45, opacity=0.35)
+    .encode(
+        x=alt.X("subject_age:Q", title="Age"),
+        y=alt.Y("raw_action_description:N", title="Outcome of Stop"),
+        yOffset="jitter:Q",
+        color=alt.Color(
+            "race_label:N",
+            scale=color_scale,
+            sort=race_order_label,
+            title="Race"
+        )
+    )
+    .add_params(
+        alt.selection_interval(
+            name="brush",
+            encodings=["x", "y"],
+            translate=True,
+            zoom=False,
+            mark=alt.BrushConfig(
+                fill="lightgray",
+                fillOpacity=0.15,
+                stroke="black",
+                strokeWidth=1.5
+            )
+        ),
+        race_select,
+        hist_select,
+        age_slider
+    )
+    .transform_filter(race_select)
+    .transform_filter(hist_select)
+    .transform_filter("datum.subject_age >= age_slider")
+    .properties(width=350, height=300, title = "Distribution of Police Actions Across Ages and Races")
+)
+
+
+# Viz 1.2
+age_hist_bars = (
+    alt.Chart(clean)
+    .mark_bar(opacity=0.7)
+    .encode(
+        x=alt.X("age_bin:N", title="Age (Binned)", sort=None),
+        y=alt.Y("count()", title="Count of Individuals"),
+        color=alt.Color("race_label:N", title = "Race", scale=color_scale, legend=None)
+    )
+    .add_params(brush, race_select, hist_select, age_slider)
+    .transform_filter(race_select)
+    .transform_filter(brush)
+    .transform_filter("datum.subject_age >= age_slider")   
+)
+
+median_age_text = (
+    alt.Chart(clean)
+    .transform_filter(brush)
+    .transform_filter(race_select)
+    .transform_filter("datum.subject_age >= age_slider")
+    .transform_aggregate(
+        median_age="median(subject_age)"
+    )
+    .transform_calculate(
+        label="'Median Age: ' + format(datum.median_age, '.1f')"
+    )
+    .mark_text(
+        align="left",
+        baseline="top",
+        dx=10,      # padding inside plot
+        dy=10,      # padding inside plot
+        fontSize=13,
+        fontWeight="bold",
+        color="black"
+    )
+    .encode(
+        x=alt.value(0),   # anchor top-left INSIDE the chart
+        y=alt.value(0),
+        text="label:N"
+    )
+)
+
+age_hist = (
+    age_hist_bars
+    + median_age_text
+).properties(
+    title="Age Distribution of Brushed Individuals",
+    width=350,
+    height=300
+)
+
+# Dummmy
+slider_chart = (
+    alt.Chart(pd.DataFrame({"x":[0]}))
+    .mark_point(opacity=0)
+    .add_params(age_slider)
+    .properties(height=40)
+)
+
+# Viz 1.3
+
+# Create uniform mock data for navigation purposes!
+race_df = pd.DataFrame({
+    "race_label": ["Asian / Pacific Islander", "Black", "Hispanic", "White"],
+    "value": [1, 1, 1, 1]   
+})
+
+base = alt.Chart(race_df).encode(
+    theta=alt.Theta("value:Q", stack=True),
+    color=alt.Color(
+        "race_label:N",
+        scale=color_scale,
+        legend=None
+    )
+)
+
+pie = base.mark_arc(outerRadius=120)
+
+text = (
+    base
+    .mark_text(
+        radius=170,
+        size=16,
+        fontWeight="bold",
+        dy=0
+    )
+    .encode(text="race_label:N"))
+    
+
+pie_chart = (
+    pie + text
+).add_params(race_select).properties(
+    width=400,
+    height=350,
+    title="Race Navigation Pie Chart"
+)
+
+pie_chart_centered = pie_chart.properties(
+    width=800,   
+    height=300
+)
+
+final_view = alt.vconcat(
+    pie_chart_centered,
+    alt.hconcat(
+        jitter_scatter_actions,
+        age_hist
+    ).resolve_scale(color="independent"),
+    slider_chart.properties(height=1)
+).properties(
+    spacing=0,
+    title={
+        "text": "How Stop Outcomes Vary Across Various Racial Groups and Ages",
+        "fontSize": 26,
+        "anchor": "middle"
+    }
+)
+
+final_view
+
+```
+
+#### AQ2: *How do different types of police actions relate to each search type (person search, vehicle search, both, or neither), and how do these patterns differ across race groups and age distributions?*
+
+### Action and Search Type Relationships Across Demographics
+
+```{python}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "View 2"
+import pandas as pd
+import numpy as np
+import altair as alt
+
+alt.data_transformers.disable_max_rows()
+alt.renderers.enable('default')
+
+clean = pd.read_csv("../../data/processed/cleaned_master_dataset.csv")
+
+# Parameters
+brush = alt.selection_interval(name="brush")
+
+race_select = alt.selection_point(
+    fields=["race_label"],
+    clear=True,
+    empty="all",     # important for jitter to load fully
+    name="race_select"
+)
+
+search_basis_radio = alt.param(
+    name="basis_select",
+    bind=alt.binding_radio(
+        options=sorted(clean["search_basis"].unique()),
+        name="Search Basis:"
+    ),
+    value=sorted(clean["search_basis"].unique())[0]
+)
+
+
+# Clean intrusiveness values before mapping
+clean["search_intrusiveness"] = (
+    clean["search_intrusiveness"]
+    .astype(str)
+    .str.strip()
+    .str.title()     
+)
+
+intrusiveness_map = {
+    "None": "Neither",          #
+    "Neither": "Neither",      
+    "Person Only": "Person Only",
+    "Vehicle Only": "Vehicle Only",
+    "Both": "Both"
+}
+
+intrusiveness_order = ["Neither", "Person Only", "Vehicle Only", "Both"]
+
+
+clean["intrusiveness_label"] = clean["search_intrusiveness"].map(intrusiveness_map)
+
+
+
+# Race order (used for sorting legends + axes)
+race_order_label = ["Asian / Pacific Islander", "Black", "Hispanic", "White"]
+
+# Color scale for races
+color_scale = alt.Scale(
+    domain=race_order_label,
+    range=["#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3"]
+)
+
+
+
+# Pre-processing 
+bins = pd.cut(clean["subject_age"], bins=10)
+clean["age_bin"] = bins.astype(str)
+
+# Viz 2.1
+clean_heatmap = clean.copy()
+clean_heatmap["search_basis"] = clean_heatmap["search_basis"].astype(str)
+
+# Compute total dataset count once
+total_count = len(clean_heatmap)
+base_heat = alt.Chart(clean_heatmap)
+
+
+heat_rect = (
+    base_heat
+    .transform_aggregate(
+        count="count()",
+        groupby=["raw_action_description", "search_intrusiveness"]
+    )
+    .transform_calculate(
+        pct="datum.count / {}".format(total_count)   
+    )
+    .mark_rect()
+    .encode(
+        x=alt.X(
+            "search_intrusiveness:N",
+            sort=["None", "Person Only", "Vehicle Only", "Both"],
+            title="Search Type"
+        ),
+        y=alt.Y(
+            "raw_action_description:N", 
+            title="Outcome of Stop"),
+        color=alt.Color(
+    "pct:Q",
+    title="Proportion of All Stops",
+    scale=alt.Scale(
+        scheme="teals",
+        domain=[0, 0.5],     
+        nice=False
+    )
+),
+        tooltip=[
+    alt.Tooltip("count:Q", title="Count"),
+    alt.Tooltip("pct:Q", title="Proportion of all Stops", format=".2f")
+]
+    )
+)
+
+
+heat_text = (
+    base_heat
+    .transform_aggregate(
+        count="count()",
+        groupby=["raw_action_description", "search_intrusiveness"]
+    )
+    .transform_calculate(
+        pct="datum.count / {}".format(total_count)
+    )
+    .mark_text(
+        fontSize=12,
+        fontWeight="bold",
+        color="black"
+    )
+    .encode(
+        x=alt.X("search_intrusiveness:N",
+                sort=["None", "Person Only", "Vehicle Only", "Both"]),
+        y=alt.Y("raw_action_description:N", title = "Outcome of Stop"),
+        text=alt.Text("pct:Q", format=".2f")  
+    )
+)
+
+final_heatmap = (
+    (heat_rect + heat_text)
+    .add_params(search_basis_radio)  
+    .properties(
+        width=650,
+        height=280,
+        title="Outcome of Stop × Search Type (Proportion of all Stops)"
+    )
+)
+
+# Fix selection defaults
+race_select = alt.selection_point(
+    fields=["race_label"],
+    clear=True,
+    empty="all",     # allows jitter to load fully before any click
+    name="race_select"
+)
+
+# Viz 2.2 
+jitter_intrusive = (
+    alt.Chart(clean)
+    .transform_filter("datum.search_basis == basis_select")
+    .transform_filter(race_select)
+    .transform_calculate(
+        jitter_x="(random() - 0.5) * 6",
+        jitter_y="(random() - 0.5) * 0.8"
+    )
+    .mark_circle(size=48, opacity=0.45)
+    .encode(
+        x=alt.X("subject_age:Q", title="Age"),
+        xOffset="jitter_x:Q",
+        y=alt.Y("intrusiveness_label:N",
+                title="Search Type",
+                sort=intrusiveness_order),
+        yOffset="jitter_y:Q",
+        color=alt.Color("race_label:N", scale=color_scale)
+    )
+    .add_params(brush, race_select)
+    .properties(width=350, height=300, title="Jittered Scatterplot of Age and Search Type")
+)
+
+
+# Viz 2.3
+race_bar_final = (
+    alt.Chart(clean)
+    .transform_filter(brush)
+    .transform_filter("datum.search_basis == basis_select")
+    .mark_bar()
+    .encode(
+        x=alt.X("race_label:N", sort=race_order_label, title="Race"),
+        y=alt.Y("count()", title="Count"),
+        color=alt.condition(
+            race_select,
+            alt.Color("race_label:N", scale=color_scale, title="Race"),
+            alt.value("lightgray")
+        )
+    )
+    .add_params(brush, race_select)
+    .properties(width=250, height=300, title="Race Bar Chart (for Selected Subset)")
+)
+
+
+bottom_row = alt.hconcat(jitter_intrusive, race_bar_final)
+
+final_view = (
+    final_heatmap & bottom_row
+).resolve_scale(color="independent").properties(
+    title={
+        "text": "Action and Search Type Relationships Across Demographics",
+        "anchor": "middle",
+        "fontSize": 24,
+        "fontWeight": "bold"
+    }
+)
+
+final_view
+
+```
+
+#### AQ3: *How do age distributions differ between individuals who were arrested and those who were not, and how do contraband findings among these groups change over time when examining specific subsets of individuals?*
+
+### Age, Arrest Outcomes, and Contraband Patterns Over Time
+
+```{python}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "View 3"
+
+import pandas as pd
+import numpy as np
+import altair as alt
+
+alt.data_transformers.disable_max_rows()
+alt.renderers.enable('default')
+
+clean = pd.read_csv("../../data/processed/cleaned_master_dataset.csv")
+
+race_order = ["Asian / Pacific Islander", "Black", "Hispanic", "White"]
+
+race_offset_map = {
+    "Asian / Pacific Islander": -0.25,
+    "Black": -0.10,
+    "Hispanic": 0.10,
+    "White": 0.25
+}
+
+clean["race_offset"] = clean["race_label"].map(race_offset_map)
+
+agg = (
+    clean.groupby([
+        "subject_age",
+        "arrest_status_label",
+        "race_label",
+        "year"
+    ])
+    .size()
+    .reset_index(name="count")
+)
+
+
+agg["race_offset"] = agg["race_label"].map(race_offset_map)
+
+brush = alt.selection_interval(name="brush")
+
+contraband_type = alt.param(
+    name="contraband_type",
+    bind=alt.binding_select(
+        options=[
+            "Any Contraband",
+            "Drugs",
+            "Weapons"
+        ],
+        name="Contraband Type:"
+    ),
+    value="Any Contraband"
+)
+
+# Viz 3.1
+box = (
+    alt.Chart(agg)
+    .mark_boxplot(
+        size=100,
+        ticks=True,
+        color="black",
+        median={"color": "black"}
+    )
+    .encode(
+        x=alt.X("arrest_status_label:N",
+                sort=["Not Arrested", "Arrested"],
+                title="Arrest Status"),
+        y=alt.Y("subject_age:Q", title="Age")
+    )
+)
+
+agg_points = (
+    alt.Chart(agg)
+    .transform_calculate(
+        rand_jitter="(random() - 0.5) * 0.15",
+        offset="datum.race_offset * 80 + datum.rand_jitter * 80"
+    )
+    .mark_circle(size=60, stroke="white", strokeWidth=0.3)
+    .encode(
+        x=alt.X("arrest_status_label:N",
+                sort=["Not Arrested", "Arrested"]),
+        xOffset="offset:Q",
+        y="subject_age:Q",
+        color=alt.Color("race_label:N",
+                        scale=alt.Scale(scheme="set2"),
+                        title = "Race",
+                        sort=race_order),
+        opacity=alt.condition(brush, alt.value(0.9), alt.value(0.08)),
+    )
+    .add_params(brush)  
+)
+
+# Viz 3.2
+brushed_over_time = (
+    alt.Chart(clean)
+    .add_params(contraband_type)
+    # compute contraband_flag based on dropdown
+    .transform_calculate(
+        contraband_flag = """(
+            (contraband_type == 'Any Contraband' && datum.contraband_found == 1) || 
+            (contraband_type == 'Drugs' && datum.contraband_drugs == 1) ||
+            (contraband_type == 'Weapons' && datum.contraband_weapons == 1)
+        )"""
+    )
+    .transform_filter(brush)
+    .transform_filter("datum.contraband_flag")
+    .transform_filter("datum.year == 2005 || datum.year == 2015")
+    .transform_aggregate(
+        brushed_count="count()",
+        groupby=["year"]
+    )
+
+    .mark_line(point=True, strokeWidth=2)
+    .encode(
+        x=alt.X("year:O", title="Year"),
+        y=alt.Y("brushed_count:Q",
+                title="Count of Brushed Individuals")
+    )
+    .properties(
+        width=450, height=250,
+        title="Brushed Individuals Found With a Contraband (2005 vs. 2015)"
+    )
+)
+
+big_boxplot_brushed = (
+    alt.layer(box, agg_points)
+    .properties(
+        width=450,
+        height=250,
+        title="Jittered Boxplot (Age × Arrest Status)"
+    )
+)
+
+final_view = (
+    alt.vconcat(
+        big_boxplot_brushed,
+        brushed_over_time
+    )
+    .resolve_scale(color="independent")
+    .properties(
+        title={
+            "text": "Age, Arrest Outcomes, and Contraband Patterns Over Time",
+            "anchor": "middle",
+            "fontSize": 24,
+            "fontWeight": "bold"
+        }
+    )
+)
+
+final_view
+
+```

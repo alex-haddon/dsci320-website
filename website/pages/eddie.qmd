@@ -1,0 +1,395 @@
+---
+title: "Patterns of Driver Sex and Age in Traffic Stops"
+author: "Eddie Sobczak"
+page-layout: full
+toc: false
+---
+
+#### AQ1: *How does the probability of a driver being stopped change with driver age and driver sex?*
+
+### Patterns in Stop Probability by Driver Age and Driver Sex
+
+```{python}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "View 1"
+import pandas as pd
+import altair as alt
+import numpy as np
+from statsmodels.distributions.empirical_distribution import ECDF
+
+alt.data_transformers.enable("vegafusion")
+
+unnecessary_cols = ['date', 'time', 'subject_race', 'arrest_made', 'citation_issued', 'warning_issued', 
+                    'outcome', 'department_name', 'contraband_found', 'contraband_drugs', 
+                    'contraband_weapons', 'frisk_performed', 'search_conducted', 'search_person', 'search_vehicle',
+                    'search_basis', 'reason_for_frisk', 'reason_for_search', 'reason_for_stop']
+
+ncdata = pd.read_csv('../../data/processed/registered_processed_nc_2005_2015.csv',
+                parse_dates=['datetime']
+                ).drop(columns=unnecessary_cols)
+
+ncdata['subject_sex'] = ncdata['subject_sex'].str.title()
+
+# this cell is to calculate the Empirical Cumulative Distribution Function
+# this can be done in Altair using transform_window, but the interactivity doesn't work properly when that is done
+ecdf_male_2005 = ECDF(ncdata.query('year_sex == "Male 2005"')['subject_age'], side='right')
+ecdf_female_2005 = ECDF(ncdata.query('year_sex == "Female 2005"')['subject_age'], side='right')
+ecdf_male_2015 = ECDF(ncdata.query('year_sex == "Male 2015"')['subject_age'], side='right')
+ecdf_female_2015 = ECDF(ncdata.query('year_sex == "Female 2015"')['subject_age'], side='right')
+
+
+ecdf_total = []
+
+for i in range(len(ncdata)):
+    if ncdata.loc[i, 'year_sex'] == "Male 2005":
+        ecdf_total.append(ecdf_male_2005(ncdata.loc[i, 'subject_age']).tolist())
+    if ncdata.loc[i, 'year_sex'] == 'Female 2005':
+        ecdf_total.append(ecdf_female_2005(ncdata.loc[i, 'subject_age']).tolist())
+    if ncdata.loc[i, 'year_sex'] == "Male 2015":
+        ecdf_total.append(ecdf_male_2015(ncdata.loc[i, 'subject_age']).tolist())
+    if ncdata.loc[i, 'year_sex'] == 'Female 2015':
+        ecdf_total.append(ecdf_female_2015(ncdata.loc[i, 'subject_age']).tolist())
+
+ncdata['ecdf'] = ecdf_total
+
+ncdata_subset = ncdata[['subject_age', 'ecdf', 'subject_sex', 'year']]
+ncdata_unique = ncdata[['subject_age', 'ecdf', 'subject_sex', 'year']].drop_duplicates()
+
+# year dropdown
+year_dropdown = alt.selection_point(bind=alt.binding_select(name='Year of Stop ', options = [2005, 2015]),
+                                    value=2005, fields=['year'])
+
+# line interaction
+line = alt.selection_point(fields=['subject_age'], nearest=True, on='pointerover', empty=False)
+
+# hovering line
+rule = alt.Chart(ncdata_unique).mark_rule(
+    color='gray'
+).transform_filter(
+    year_dropdown
+).encode(
+    alt.X('subject_age:Q'),
+    opacity=alt.when(line).then(alt.value(0.7)).otherwise(alt.value(0)),
+    tooltip=[alt.Tooltip('subject_age').title('Driver Age'),
+            alt.Tooltip('ecdf').title('Proportion of Stops').format(".2f")]
+).add_params(line, year_dropdown)
+
+# ecdf distribution
+ecdf_dist_male = alt.Chart(
+    ncdata_unique.query('subject_sex == "Male"')[['subject_age', 'ecdf', 'year']]
+).transform_filter(
+    year_dropdown
+).mark_line(strokeWidth=3, color='#cb9be8').encode(
+    alt.X('subject_age:Q').title('Age of Driver'),
+    alt.Y('ecdf:Q').title('Cumulative Distribution of Stops')
+).add_params(
+    year_dropdown
+).properties(
+    height=200, width=200
+)
+
+ecdf_dist_female = alt.Chart(
+    ncdata_unique.query('subject_sex == "Female"')[['subject_age', 'ecdf', 'year']]
+).transform_filter(
+    year_dropdown
+).mark_line(strokeWidth=3, color='#c5e29f').encode(
+    alt.X('subject_age:Q').title('Age of Driver'),
+    alt.Y('ecdf:Q').title('Proportion of Stops That Have Occurred')
+).add_params(
+    year_dropdown
+).properties(
+    title='Empirical Cumulative Distribution of Traffic Stops',
+    height=200, width=200
+)
+
+# histogram distribution
+histogram = alt.Chart(ncdata_subset).transform_filter(
+    year_dropdown
+).mark_bar(opacity=0.85).encode(
+    alt.Y('count():Q').title('Number of Stops').stack('zero'),
+    alt.X('subject_age:Q').title('Age of Driver').bin(maxbins=30),
+    alt.Color('subject_sex:N').title('Sex of Driver').scale(domain=['Female', 'Male'], range=['#c5e29f', '#cb9be8'])
+).properties(
+    title='Distribution of Total Traffic Stops',
+    height=400, width=400
+)
+
+# chart layering
+ecdf_male_final = alt.layer(ecdf_dist_male, rule)
+ecdf_female_final = alt.layer(ecdf_dist_female, rule)
+hist_final = alt.layer(histogram, rule)
+
+alt.hconcat((ecdf_female_final & ecdf_male_final), hist_final, center=True)
+
+```
+
+#### AQ2: *How does the outcome of the traffic stop vary between drivers of different ages and sexes, and which driver age range and sex are most associated with a poor traffic stop outcome (i.e. arrest)?*
+
+### Patterns of Stop Outcome Among Male and Female Drivers
+
+```{python}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "View 2"
+import pandas as pd
+import altair as alt
+import numpy as np
+
+alt.data_transformers.enable("vegafusion")
+
+unnecessary_cols = ['date', 'time', 'subject_race', 'arrest_made', 'citation_issued', 'warning_issued', 
+                    'department_name', 'contraband_found', 'contraband_drugs', 
+                    'contraband_weapons', 'frisk_performed', 'search_conducted', 'search_person', 'search_vehicle',
+                    'search_basis', 'reason_for_frisk', 'reason_for_search', 'reason_for_stop']
+
+ncdata = pd.read_csv('../../data/processed/registered_processed_nc_2005_2015.csv',
+                    parse_dates=['datetime']
+                    ).drop(columns=unnecessary_cols)
+
+ncdata['subject_sex'] = ncdata['subject_sex'].str.title()
+
+ncdata_subset=ncdata[['subject_age', 'subject_sex', 'outcome', 'year']]
+
+# the radio:
+year_radio = alt.selection_point(fields=['year'], value=2005,
+                                bind=alt.binding_radio(name='Year of Stop ', options = [2005, 2015]))
+
+# the legend interaction:
+outcome_click = alt.selection_point(fields=['outcome'], bind='legend', empty=True, name='outcome_click', resolve='global')
+outcome_click3 = alt.selection_point(fields=['outcome'], bind='legend', empty=False)
+
+# making the 'tealblues' scheme explicit
+color_scale = alt.Scale(domain=["no action", "warning", "citation", "arrest"],
+                        range=["#92ccd0", "#67b4c3", "#4399b4", "#3c7ca0"])
+
+# create stacked bar chart
+stacked_bar = alt.Chart(ncdata_subset,
+                        title=alt.Title('Stop Outcomes Among Male and Female Drivers',
+                                        anchor='middle')).mark_bar(
+).transform_calculate(
+    outcome_order=f"if({outcome_click.name}.outcome && indexof({outcome_click.name}.outcome, datum.outcome) !== -1, 0, 1)"
+).transform_filter(
+    year_radio
+).encode(
+    alt.X('subject_age:Q').title('Age of Driver').bin(maxbins=35),
+    alt.Y('count():Q').title('Proportion of Stops').stack('normalize'),
+    alt.Column('subject_sex:N').title(None),
+    alt.Color('outcome:N').title('Outcome of Stop').scale(color_scale
+                                                        ).sort(['no action', 'warning', 'citation', 'arrest']),
+    order='outcome_order:N',
+    opacity=alt.when(outcome_click).then(alt.value(0.95)).otherwise(alt.value(0.2))
+).add_params(
+    outcome_click,
+    year_radio,
+    outcome_click3
+).properties(height=250,
+            width=250)
+
+# base boxplot
+boxplot_base = alt.Chart(ncdata_subset).mark_boxplot(
+    box={'size': 35,
+        'strokeWidth':0.5,
+        'stroke':'black'},
+    median={'fill':'black',
+            'size':35},
+    extent='min-max',
+    rule={'strokeWidth':1.5}
+).transform_filter(
+    year_radio,
+    outcome_click
+).encode(
+    alt.X('subject_age:Q').title('Age of Driver'),
+    alt.Y('subject_sex:N').title('Sex of Driver'),
+    color=alt.Color('outcome').scale(color_scale).sort(['no action', 'warning', 'citation', 'arrest']),
+    opacity=alt.when(outcome_click3).then(alt.value(1)).otherwise(alt.value(0))
+).properties(
+    height=125,
+    width=500,
+    title='Age Distribution of Stops'
+)
+
+# base jitter plot
+jitter_base = alt.Chart(ncdata_subset).mark_point(
+    size=0.55
+).transform_filter(
+    year_radio,
+    outcome_click
+).encode(
+    alt.X('subject_age:Q').title('Age of Driver'),
+    alt.Y('subject_sex:N').title('Sex of Driver'),
+    color=alt.Color('outcome').scale(color_scale).sort(['no action', 'warning', 'citation', 'arrest']),
+    opacity=alt.when(outcome_click3).then(alt.value(0.15)).otherwise(alt.value(0)),
+    yOffset="jitter:Q"
+).transform_calculate(
+    jitter="sqrt(-2*log(random()))*cos(2*PI*random())"
+).properties(
+    height=125,
+    width=500
+)
+
+# gray (all data) boxplot
+boxplot_gray = alt.Chart(ncdata_subset).mark_boxplot(
+    box={'size': 35,
+        'color': 'gray'},
+    median={'fill':'black',
+            'size':35},
+    extent='min-max',
+    rule={'strokeWidth':1}
+).transform_filter(
+    year_radio,
+    outcome_click
+).encode(
+    alt.X('subject_age:Q').title('Age of Driver'),
+    alt.Y('subject_sex:N').title('Sex of Driver'),
+    opacity=alt.when(outcome_click).then(alt.value(1.0)).otherwise(alt.value(0.0))
+).properties(
+    height=125,
+    width=500,
+    title='Age Distribution of Stops'
+)
+
+# layered boxplot
+boxplot=alt.layer(jitter_base, boxplot_base, boxplot_gray)
+
+(stacked_bar & boxplot)
+
+```
+
+#### AQ3: *How do the relationships between driver age, driver sex, and traffic stop likelihood change between 2005 and 2015?*
+
+### Changes in Stop Likelihood Between 2005 and 2015
+
+```{python}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "View 3"
+
+import pandas as pd
+import altair as alt
+import numpy as np
+
+alt.data_transformers.enable("vegafusion")
+
+unnecessary_cols = ['date', 'time', 'subject_race', 'arrest_made', 'citation_issued', 'warning_issued', 
+                    'outcome', 'department_name', 'contraband_found', 'contraband_drugs', 
+                    'contraband_weapons', 'frisk_performed', 'search_conducted', 'search_person', 'search_vehicle',
+                    'search_basis', 'reason_for_frisk', 'reason_for_search', 'reason_for_stop']
+
+ncdata = pd.read_csv('../../data/processed/registered_processed_nc_2005_2015.csv',
+                    parse_dates=['datetime']
+                    ).drop(columns=unnecessary_cols)
+
+ncdata['subject_sex'] = ncdata['subject_sex'].str.title()
+
+ncdata['prob_stopped'] = ncdata['percent_stopped'] / 100
+
+# creating a column of the change between 2005 and 2015
+stop_change=pd.DataFrame(ncdata[['age_range', 'year_sex', 'prob_stopped']].drop_duplicates().pivot(
+    index=['age_range'],
+    columns=['year_sex'],
+    values=['prob_stopped']))
+
+stop_change.columns = ['_'.join(str(s).strip() for s in col if s) for col in stop_change.columns]
+
+stop_change.reset_index(inplace=True)
+
+stop_change['Female'] = stop_change['prob_stopped_Female 2015'] - stop_change['prob_stopped_Female 2005']
+stop_change['Male'] = stop_change['prob_stopped_Male 2015'] - stop_change['prob_stopped_Male 2005']
+
+stop_change.columns = [s.replace('prob_stopped_', '') for s in stop_change.columns]
+stop_change
+
+change_df = stop_change.drop(columns=['Female 2005', 'Female 2015', 'Male 2005', 'Male 2015']).melt(
+    id_vars=['age_range'],
+    value_vars=['Female', 'Male'],
+    var_name='subject_sex',
+    value_name='stop_change'
+)
+
+ncdata = ncdata.merge(change_df, how='left', on=['age_range', 'subject_sex'])
+
+# currently bidirectional interactive for two and unidirectional for third
+
+# starting with selection
+yearsex_click = alt.selection_point(fields=['year_sex'], toggle=True)
+
+# color scheme checkbox
+color_check = alt.param(bind=alt.binding_checkbox(name="grey Color Scheme "))
+check_color_scheme = alt.param(expr=f"{color_check.name} ? 'greys' : 'magma'") 
+
+# separate layers of bar chart
+bar_bottom = alt.Chart(ncdata[['year', 'subject_sex']]).mark_bar(opacity=0).encode(
+    alt.X('year:O').title('Year of Stop').axis(labelAngle=0),
+    alt.Y('count():Q').stack('normalize').title('Percent of Stops'),
+    alt.Color('subject_sex:N').title('Sex of Driver'
+                                    ).scale(domain=['Female', 'Male'], range=['#c5e29f', '#cb9be8']))
+
+bar_top = alt.Chart(ncdata[['year_sex', 'year', 'subject_sex']]).mark_bar().add_params(
+    yearsex_click
+).encode(
+    alt.X('year:O').title('Year of Stop'),
+    alt.Y('count(groupby(year_sex)):Q').stack('normalize').title('Percent of Stops'),
+    alt.Color('year_sex:N').title('Sex of Driver'
+                                ).scale(domain=['Female 2005', 'Male 2005', 'Female 2015', 'Male 2015'],
+                                        range=['#c5e29f', '#cb9be8', '#c5e29f', '#cb9be8']
+                                        ),
+    opacity=alt.when(yearsex_click).then(alt.value(1.0)).otherwise(alt.value(0.1)))
+
+# layering stacked bar chart
+bar_stack = alt.layer(bar_bottom, bar_top).properties(height=300, width=150, title="Proportion of Stops")
+
+# heatmap
+heatmap = alt.Chart(
+    ncdata[['year_sex', 'age_range', 'prob_stopped', 'stop_change', 'age_sex_reg', 'age_sex_stop']]
+).mark_rect().add_params(
+    yearsex_click,
+    color_check,
+    check_color_scheme
+).encode(
+    alt.Y('year_sex:N').title(None),
+    alt.X('age_range:O').title('Age Range of Driver').axis(labelAngle=-45, labelPadding=5),
+    alt.Color('prob_stopped:Q'
+            ).scale(scheme=check_color_scheme, reverse=True
+                    ).title(['Percent of', 'Registered Drivers']
+                            ).legend(format=".2%",
+                                    values=[0.00, 0.05], gradientLength=170, titlePadding=10),
+    opacity=alt.when(yearsex_click).then(alt.value(1.0)).otherwise(alt.value(0.1)),
+    tooltip = (alt.Tooltip('median(age_sex_stop)').title("Total Stops").format(","),
+                alt.Tooltip('median(age_sex_reg)').title("Total Registered Drivers").format(","),
+                alt.Tooltip('median(prob_stopped)', format=".2%").title("Percent of Drivers Stopped"),
+                alt.Tooltip('median(stop_change)', format=".2%" 
+                            ).title('Change in Percent of Drivers Stopped From 2005 to 2015'))
+).properties(title='Percent of Registered Drivers Stopped in Traffic',
+            height=200,
+            width=400)
+
+# density distribution
+dist = alt.Chart(ncdata[['subject_age', 'subject_sex', 'year_sex']]).mark_area(
+    opacity=0.5,
+    stroke='black',
+    strokeWidth=0.75,
+    strokeOpacity=1
+).transform_filter(
+    yearsex_click
+).transform_density(
+    'subject_age',
+    groupby=['subject_sex'],
+    as_=['age', 'density']
+).encode(
+    alt.X('age:Q').title('Age of Driver'),
+    alt.Y('density:Q').title('Density').stack(None),
+    alt.Color('subject_sex').title('Sex of Driver').scale(domain=['Female', 'Male'], range=['#c5e29f', '#cb9be8']
+                                                        ).legend(values=["Female", "Male"],
+                                                                labelFontSize=12)
+).properties(title='Density Distribution of Traffic Stops',
+            height=300,
+            width=310)
+
+view3 = ((heatmap) & (bar_stack | dist))
+
+view3
+```

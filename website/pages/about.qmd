@@ -1,0 +1,41 @@
+---
+title: "Data"
+---
+
+## About the Data
+
+#### **Description**
+This dataset is a record of all traffic stops in the city of Charlotte, North Carolina, United States in 2005 and 2015. Charlotte is the capitol and largest city in North Carolina, and is a major urban population center in the United States. The dataset records the date, time, and location of the traffic stop; the age, sex, and ethnicity of the driver; the reason for the traffic stop, including suspicion of drugs, weapons, or illegal activity; whether the car was searched and if anything was found; and whether a citation or warning was issued, or an arrest was made. The raw data comes as separate files for each city center, which must be combined into a cohesive dataset. The raw data is much too large for Altair to handle with nearly 4 million observations between the years of 2000 and 2015, so we have taken a random sample of 400,000 observations between 2010 and 2015 for our analysis.
+
+#### **Source**
+The dataset comes from the Stanford Open Policing Project (SOPP), available [here](https://openpolicing.stanford.edu/data/). The project was created to improve transparency and enable research on racial disparities in police traffic stops across the United States.
+
+To build this dataset,  the SOPP team filed hundreds of public records requests to state and local law enforcement agencies under Freedom of Information laws. Millions of individual traffic stop records were gathered and standardized across jurisdictions to ensure consistent variable names. The data was collected to analyze, document, and share patterns of policing behavior, so researchers, journalists, and policymakers could be informed on how disparities occur.
+
+## **Data Abstraction**
+| Attribute Name | Attribute Type | Data Semantics | Cardinality |
+|----------------|----------------|----------------|-------------|
+| `date` | temporal | Date on which the traffic stop occurred | min=01-01-2005, max=31-01-2015|
+| `time` | temporal | Time of day at which the traffic stop occurred | min=00:00:00, max=23:23:00|
+| `datetime` | temporal | Combination of the date and time at which the stop occurred | min=01-01-2005T00:00:00, max=31-01-2015T23:23:00 |
+| `subject_race` | nominal | Race of the stopped driver | 6 unique values |
+| `subject_sex` | nominal | Sex of the stopped driver | 2 unique values |
+| `subject_age` | quantitative | Age of the stopped driver to the year | min=16, max=110 |
+| `department_name` | nominal | Name of the police department that conducted the stop | 2 unique values |
+| `arrest_made` | boolean | Whether the stopped driver was arrested | 2 unique values |
+| `citation_issued` | boolean | Whether the stopped driver was issued a citation | 2 unique values |
+| `warning_issued` | boolean | Whether the stopped driver was issued a warning | 2 unique values |
+| `outcome` | ordinal | The final outcome of the traffic stop, i.e. whether the driver was warned, issued a citation, arrested, or had no consequenc | 4 unique values |
+| `contraband_found` | boolean | Whether contrabound was found in the car | 2 unique values |
+| `contraband_drugs` | boolean | Whether illegal drugs were found in the car | 2 unique values |
+| `contraband_weapons` | boolean | Whether illegal weapons were found in the car | 2 unique values |
+| `frisk_performed` | boolean | Whether the driver was frisked | 2 unique values |
+| `search_conducted` | boolean | Whether a search of the driver or car was performed | 2 unique values |
+|  `search_person`| boolean | Whether a search of the driver was conducted | 2 unique values |
+| `search_vehicle` | boolean | Whether a search of the vehicle was conducted | 2 unique values |
+| `search_basis` | nominal | The official basis for the search, cleaned | 3 unique values |
+| `reason_for_frisk` | string | The official basis for the frisk, as a combination of string choices | 59 unique values |
+| `reason_for_search` | string | The official basis for the search, as a combination of string choices | 28 unique values |
+| `reason_for_stop` | string | The official basis for the stop, as a single string choice | 10 unique values |
+| `raw_Ethnicity` | nominal | The uncleaned ethnicity of the driver (whether or not the driver is hispanic) | 2 unique values |
+

@@ -1,0 +1,42 @@
+---
+title: "Patterns in Traffic Stop Outcomes"
+author: "Roxanna Ng"
+page-layout: full
+toc: false
+---
+
+#### AQ1: *Title*
+
+### Title
+
+```{python}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "View 1"
+
+```
+
+#### AQ2: *Title*
+
+### Title
+
+```{python}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "View 2"
+
+```
+
+#### AQ3: *Title*
+
+### Title
+
+```{python}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "View 3"
+
+```
