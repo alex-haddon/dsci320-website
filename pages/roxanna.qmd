@@ -9,13 +9,7 @@ toc: false
 
 ### Traffic Stop Outcomes by Reason for Stop and Whether a Search was Conducted, Over Months and Years
 
-```{python}
-#| echo: false
-#| message: false
-#| warning: false
-#| fig-cap: "View 1"
-
-```
+This view is too large to be hosted with GitHub. Please render locally.
 
 #### AQ2: *What are the patterns between the outcome of a stop and the reason for a stop, across different ages?*
 

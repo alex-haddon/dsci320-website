@@ -1,5 +1,7 @@
 project:
   type: website
+  render:
+  - pages/
   output-dir: docs
 
 website:
